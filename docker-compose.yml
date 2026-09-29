@@ -1,0 +1,26 @@
+x-proxy-common: &proxy-common
+  image: vpn-proxy-helper:local
+  build:
+    context: .
+    dockerfile: Dockerfile
+  network_mode: host
+  restart: unless-stopped
+  read_only: true
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  stop_grace_period: 5s
+
+services:
+  proxy-lan:
+    <<: *proxy-common
+    # Replace "eth0" with the real LAN interface name from: ip -br link
+    # Port 1080 is reachable from other LAN hosts because host networking is used.
+    command: ["-i", "eth0", "-l", "0.0.0.0:1080"]
+
+  proxy-wifi:
+    <<: *proxy-common
+    # Replace "wlan0" with the real Wi-Fi interface name from: ip -br link
+    # Every proxy must listen on a different host port.
+    command: ["-i", "wlan0", "-l", "0.0.0.0:1081"]
